@@ -1,0 +1,38 @@
+version: '3.7'
+
+services:
+  web:
+    image: 'gitlab/gitlab-ee:latest'
+    restart: 'on-failure'
+    hostname: 'gitlab-server'
+    container_name: gitlab-server
+    environment:
+      GITLAB_OMNIBUS_CONFIG: |
+        external_url 'http://gitlab-server'
+    ports:
+      - '80:80'
+      - '8443:443'
+      - '22:22'
+    volumes:
+      - '$GITLAB_HOME/config:/etc/gitlab'
+      - '$GITLAB_HOME/logs:/var/log/gitlab'
+      - '$GITLAB_HOME/data:/var/opt/gitlab'
+    shm_size: '256m'
+    networks:
+      - gitlab
+ 
+  gitlab-runner:
+    image: gitlab/gitlab-runner:alpine
+    container_name: gitlab-runner
+    restart: on-failure
+    depends_on:
+        - 'web'
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - '$GITLAB_HOME/runner/config:/etc/gitlab-runner'
+    networks:
+      - gitlab
+  
+networks:
+  gitlab:
+    name: gitlab-network
